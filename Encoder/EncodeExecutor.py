@@ -1,16 +1,15 @@
 from VARS_DECLARATION import *
 from FILES_DECLARATION import FILES_TABLE
 
-from typing import Literal
-
-import os
-import sys
 from pathlib import Path
+from bin.Logger.ConsolLogger import setLogger
+
+logger = setLogger("Encoder logger")
 
 
 class Executor:
-    def __init__(self):
-        self.path = Path(__file__).parent.parent
+    def __init__(self, path: Path):
+        self.path = path
 
     def run(self, **kwargs):
         # Алгоритм:
@@ -31,8 +30,9 @@ class Executor:
                 try:
                     new_path = path.with_name(obj.get_encoded())
                     path.rename(new_path)
+                    logger.log("File renamed: [%s] => [%s]", obj.get_origin(), new_path)
                 except Exception as e:
-                    print(f"E: Failed to rename {path.name}: {e}")
+                    logger.error("Failed to rename: [%s] => [%s]\n(%s)", obj.get_origin(), new_path, e)
         elif path.is_dir():
             for file in path.iterdir():
                 self.rename_files_in_dir(file)
@@ -45,4 +45,12 @@ class Executor:
             content = file.read_text(encoding='utf-8')
             replacment = content.replace(v_enc.value.get('origin'), v_enc.value.get('encoded'))
             file.write_text(replacment, encoding='utf-8')
+
+    def complicate_file(self, file: Path):
+        if not file.is_file():
+            return file
+        
+        lines = file.read_text().splitlines()
+        spaces = [i for i in range(lines) if lines[i].isspace() or lines[i] == ""]
+
         
